@@ -27,16 +27,22 @@ class Canvas {
         const context = this.canvas.getContext('2d');
         context.fillStyle = "black";
         context.beginPath();
-        context.arc(node[0], node[1], size, 0, 2 * Math.PI);
+        context.arc(...this.transform(node, this.scale, this.xMin, this.yMin), size, 0, 2 * Math.PI);
         context.fill();
     }
 
-    drawEdge(A, B) {
+    drawEdge(A, B, dashed=false) {
         const context = this.canvas.getContext("2d");
         context.strokeStyle = "gray";
         context.beginPath();
-        context.moveTo(A[0], A[1]);
-        context.lineTo(B[0], B[1]);
+        if (dashed) {
+            context.setLineDash([5, 15]);
+        }
+        else {
+            context.setLineDash([]);
+        }
+        context.moveTo(...this.transform(A, this.scale, this.xMin, this.yMin));
+        context.lineTo(...this.transform(B, this.scale, this.xMin, this.yMin));
         context.stroke();
     }
 
@@ -64,11 +70,12 @@ class Canvas {
         this.scaledNodes = [];
         for (const node of this.nodes) {
             this.scaledNodes.push(this.transform(node, scale, xMin, yMin));
-
         }
         this.scale = scale;
         this.xMin = xMin;
         this.yMin = yMin;
+        this.xMax = xMax;
+        this.yMax = yMax;
     }
 
     transform(pos, scale, xMin, yMin) {
