@@ -16,14 +16,8 @@ class Canvas {
         this.triangulation = new algorithm(this.nodes, drawingMethods);
     }
 
-    start() {
-        this.triangulation.triangulate();
-        setInterval(this.draw.bind(this), 1000/60);
-    }
-
-    startDemo() {
-        this.triangulation.triangulate(1000);
-
+    async start(delay=0) {
+        this.triangulation.triangulate(delay);
         setInterval(this.draw.bind(this), 1000/60);
     }
 
