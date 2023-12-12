@@ -1,34 +1,5 @@
-class Triangle {
-    constructor(a, b, c) {
-        this.a = a;
-        this.b = b;
-        this.c = c;
-        this.circum = null;
-    }
-    setCircum(circum) {
-        this.circum = circum;
-    }
-}
-
 function computeDst(node1, node2) {
     return Math.sqrt((node1[0] - node2[0]) * (node1[0] - node2[0]) + (node1[1] - node2[1]) * (node1[1] - node2[1]));
-}
-
-function getEdges(triangle) {
-    return [[triangle.a, triangle.b], [triangle.b, triangle.c], [triangle.c, triangle.a]];
-}
-
-function getEdgeString(edge) {
-    return Math.min(edge[0], edge[1]) + "_" + Math.max(edge[1], edge[0]);
-}
-
-function getEdgesString(triangle) {
-    const edges = getEdges(triangle);
-    const res = [];
-    for (const edge of edges) {
-        res.push(getEdgeString(edge));
-    }
-    return res;
 }
 
 function isCircum(triangle, point, nodes) {
