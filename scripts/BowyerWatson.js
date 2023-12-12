@@ -90,7 +90,7 @@ class BowyerWatson {
         }
     }
 
-    triangulate() {
+    async triangulate(demo=0) {
         const n = this.nodes.length;
         const supA = new this.constructor.Point(n, -10, -10);
         const supB = new this.constructor.Point(n+1, 20 + 10, -10);
@@ -100,7 +100,12 @@ class BowyerWatson {
         this.delaunay = [supTriangle];
 
         for (let i = 0; i < this.nodes.length; i++) {
-            this.addPoint(new this.constructor.Point(i, ...this.nodes[i]));
+            const point = new this.constructor.Point(i, ...this.nodes[i]);
+            this.addPoint(point);
+            if (demo) {
+                this.computeVoronoi();
+                await new Promise(r => setTimeout(r, demo));
+            }
         }
 
         for (let idx = this.delaunay.length - 1; idx >= 0; idx--) {

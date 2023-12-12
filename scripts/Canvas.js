@@ -4,6 +4,9 @@ class Canvas {
         this.nodes = nodes;
         this.offset = 0;
 
+        this.sizeAdapt();
+        window.addEventListener("resize", () => this.sizeAdapt());
+
         const drawingMethods = {
             drawPoint: this.drawPoint.bind(this),
             drawEdge: this.drawEdge.bind(this),
@@ -14,15 +17,21 @@ class Canvas {
     }
 
     start() {
-        this.sizeAdapt();
-        window.addEventListener("resize", () => this.sizeAdapt());
+        this.triangulation.triangulate();
+        setInterval(this.draw.bind(this), 1000/60);
+    }
+
+    startDemo() {
+        this.triangulation.triangulate(1000);
+
         setInterval(this.draw.bind(this), 1000/60);
     }
 
     draw() {
         this.clearCanvas();
-        this.triangulation.draw(this.scaledNodes);
+        this.triangulation.draw();
     }
+
 
     clearCanvas() {
         const context = this.canvas.getContext("2d");
