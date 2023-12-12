@@ -1,8 +1,7 @@
 // based on https://en.wikipedia.org/wiki/Bowyer%E2%80%93Watson_algorithm
 // https://codeforces.com/blog/entry/85638
 
-// O(n^2)
-class BowyerWatson {
+class NaiveBowyerWatson {
 
     static Point = class {
         constructor(idx, x, y) {
@@ -23,6 +22,12 @@ class BowyerWatson {
             this.c = c;
             this.circum = computeCircum(this.getPointsCoords());
             this.radius = computeDst(a.getPointCoord(), this.circum);
+        }
+
+        toString() {
+            const idxs = [this.a.idx, this.b.idx, this.c.idx];
+            idxs.sort();
+            return `${idxs[0]}_${idxs[1]}_${idxs[2]}`;
         }
 
 
@@ -66,7 +71,6 @@ class BowyerWatson {
         this.drawingMethods = drawingMethods;
         this.delaunay = null;
         this.voronoi = null;
-        this.extendedNodes = null;
     }
 
     draw() {
@@ -80,7 +84,7 @@ class BowyerWatson {
             this.computeVoronoi();
         }
 
-        for (const triangle of this.delaunay) {
+        for (const triangle of Object.values(this.delaunay)) {
             this.drawingMethods.drawEdge(triangle.a.getPointCoord(), triangle.b.getPointCoord(), true);
             this.drawingMethods.drawEdge(triangle.c.getPointCoord(), triangle.b.getPointCoord(), true);
             this.drawingMethods.drawEdge(triangle.a.getPointCoord(), triangle.c.getPointCoord(), true);
@@ -90,14 +94,19 @@ class BowyerWatson {
         }
     }
 
-    async triangulate(demo=0) {
+    async triangulate(demo=0, random=true) {
         const n = this.nodes.length;
         const supA = new this.constructor.Point(n, -10, -10);
         const supB = new this.constructor.Point(n+1, 20 + 10, -10);
         const supC = new this.constructor.Point(n+2, -10, 20 + 10);
 
         const supTriangle = new this.constructor.Triangle(supA, supB, supC);
-        this.delaunay = [supTriangle];
+        this.delaunay = {};
+        this.delaunay[supTriangle.toString()] = supTriangle;
+
+        if (random) {
+            shuffleArray(this.nodes);
+        }
 
         for (let i = 0; i < this.nodes.length; i++) {
             const point = new this.constructor.Point(i, ...this.nodes[i]);
@@ -108,12 +117,11 @@ class BowyerWatson {
             }
         }
 
-        for (let idx = this.delaunay.length - 1; idx >= 0; idx--) {
-            const triangle = this.delaunay[idx];
+        for (const triangleString of Object.values(this.delaunay)) {
+            const triangle = this.delaunay[triangleString];
             for (const point of triangle.getPoints()) {
                 if (point.idx >= this.nodes.length) {
-                    // we should find an other datastructure to avoid expensive operation
-                    this.delaunay.splice(idx, 1);
+                    delete this.delaunay[triangleString];
                     break;
                 }
             }
@@ -123,7 +131,7 @@ class BowyerWatson {
     addPoint(point) {
         const badTriangles = [];
         const sharedEdges = {};
-        for (const triangle of this.delaunay) {
+        for (const triangle of Object.values(this.delaunay)) {
             if (triangle.isCircum(point)) {
                 badTriangles.push(triangle);
                 for (const edgeString of triangle.getEdgesString()) {
@@ -146,18 +154,18 @@ class BowyerWatson {
         }
 
         for (const triangle of badTriangles) {
-            this.delaunay.splice(this.delaunay.indexOf(triangle), 1);
+            delete this.delaunay[triangle.toString()];
         }
 
         for (const edge of polygon) {
             const newTriangle = new this.constructor.Triangle(edge[0], edge[1], point);
-            this.delaunay.push(newTriangle);
+            this.delaunay[newTriangle.toString()] = newTriangle;
         }
     }
 
     computeVoronoi() {
         const edgeTriangle = {};
-        for (const triangle of this.delaunay) {
+        for (const triangle of Object.values(this.delaunay)) {
             for (const edge of triangle.getEdges()) {
                 const edgeString = this.constructor.Triangle.getEdgeString(edge);
                 if (!(edgeString in edgeTriangle)) {
@@ -167,7 +175,7 @@ class BowyerWatson {
             }
         }
         this.voronoi = [];
-        for (const triangle of this.delaunay) {
+        for (const triangle of Object.values(this.delaunay)) {
             for (const edgeString of triangle.getEdgesString(triangle)) {
                 for (const triangle2 of edgeTriangle[edgeString]) {
                     if (triangle2 == triangle) {

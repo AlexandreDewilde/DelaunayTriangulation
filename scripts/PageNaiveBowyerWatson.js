@@ -18,7 +18,7 @@ function recreateCanvas(delay) {
     resizeCanvas(canvasTriangulation, window.innerWidth - 100, window.innerHeight - 100);
     window.addEventListener("resize", () => resizeCanvas(canvasTriangulation, window.innerWidth - 100, window.innerHeight - 100));
 
-    triangulation = new Canvas(nodeData, BowyerWatson, canvasTriangulation);
+    triangulation = new Canvas(nodeData, NaiveBowyerWatson, canvasTriangulation);
     sectionCanvas.appendChild(canvasTriangulation);
     demo = triangulation.start(delay);
 }

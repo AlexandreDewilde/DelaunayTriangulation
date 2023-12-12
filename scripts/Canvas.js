@@ -7,13 +7,20 @@ class Canvas {
         this.sizeAdapt();
         window.addEventListener("resize", () => this.sizeAdapt());
 
-        const drawingMethods = {
+        this.drawingMethods = {
             drawPoint: this.drawPoint.bind(this),
             drawEdge: this.drawEdge.bind(this),
             drawText: this.drawText.bind(this),
             drawPath: this.drawPath.bind(this),
         }
-        this.triangulation = new algorithm(this.nodes, drawingMethods);
+        this.algorithm = algorithm
+        this.triangulation = new algorithm(this.nodes, this.drawingMethods);
+    }
+
+    resetNodes(nodes) {
+        this.nodes = nodes;
+        this.sizeAdapt();
+        this.triangulation = new this.algorithm(this.nodes, this.drawingMethods);
     }
 
     async start(delay=0) {
