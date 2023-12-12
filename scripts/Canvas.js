@@ -2,8 +2,15 @@ class Canvas {
     constructor(nodes, algorithm, canvas) {
         this.canvas = canvas;
         this.nodes = nodes;
-        this.triangulation = new algorithm(this.nodes, this.drawPoint.bind(this), this.drawEdge.bind(this), this.drawPath.bind(this));
         this.offset = 0;
+
+        const drawingMethods = {
+            drawPoint: this.drawPoint.bind(this),
+            drawEdge: this.drawEdge.bind(this),
+            drawText: this.drawText.bind(this),
+            drawPath: this.drawPath.bind(this),
+        }
+        this.triangulation = new algorithm(this.nodes, drawingMethods);
     }
 
     start() {

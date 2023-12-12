@@ -60,10 +60,10 @@ class BowyerWatson {
         }
     }
 
-    constructor(nodes, drawNode, drawEdge) {
+    constructor(nodes, drawingMethods) {
+
         this.nodes = nodes;
-        this.drawNode = drawNode;
-        this.drawEdge = drawEdge;
+        this.drawingMethods = drawingMethods;
         this.delaunay = null;
         this.voronoi = null;
         this.extendedNodes = null;
@@ -71,7 +71,7 @@ class BowyerWatson {
 
     draw() {
         for (const node of this.nodes) {
-            this.drawNode(node, 5, "black", this.canvas);
+            this.drawingMethods.drawPoint(node, 5, "black", this.canvas);
         }
         if (!this.delaunay) {
             this.triangulate();
@@ -81,12 +81,12 @@ class BowyerWatson {
         }
 
         for (const triangle of this.delaunay) {
-            this.drawEdge(triangle.a.getPointCoord(), triangle.b.getPointCoord(), true);
-            this.drawEdge(triangle.c.getPointCoord(), triangle.b.getPointCoord(), true);
-            this.drawEdge(triangle.a.getPointCoord(), triangle.c.getPointCoord(), true);
+            this.drawingMethods.drawEdge(triangle.a.getPointCoord(), triangle.b.getPointCoord(), true);
+            this.drawingMethods.drawEdge(triangle.c.getPointCoord(), triangle.b.getPointCoord(), true);
+            this.drawingMethods.drawEdge(triangle.a.getPointCoord(), triangle.c.getPointCoord(), true);
         }
         for (const edge of this.voronoi) {
-            this.drawEdge(edge[0], edge[1]);
+            this.drawingMethods.drawEdge(edge[0], edge[1]);
         }
     }
 
