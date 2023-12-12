@@ -2,7 +2,7 @@ class Canvas {
     constructor(nodes, algorithm, canvas) {
         this.canvas = canvas;
         this.nodes = nodes;
-        this.triangulation = new algorithm(this.nodes, this.drawPoint.bind(this), this.drawEdge.bind(this));
+        this.triangulation = new algorithm(this.nodes, this.drawPoint.bind(this), this.drawEdge.bind(this), this.drawPath.bind(this));
         this.offset = 0;
     }
 
@@ -50,6 +50,19 @@ class Canvas {
         const context = this.canvas.getContext("2d");
         context.font = "20px sans-serif";
         context.fillText(text, x, y);
+    }
+
+    drawPath(path) {
+        const colors = ["red", "blue", "orange", "black"];
+        const color = colors[3];//colors[Math.floor(Math.random() * (colors.length-1))];
+        const context = this.canvas.getContext("2d");
+        context.beginPath();
+        context.moveTo(...this.transform(path[0], this.scale, this.xMin, this.yMin));
+        for (let i = 1; i < path.length; i++) {
+            context.lineTo(...this.transform(path[i], this.scale, this.xMin, this.yMin));
+        }
+        context.fillStyle = color;
+        context.fill();
     }
 
     sizeAdapt() {
