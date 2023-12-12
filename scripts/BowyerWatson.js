@@ -4,15 +4,42 @@
 // O(n^2)
 class BowyerWatson {
 
+    static Point = class {
+        constructor(idx, x, y) {
+            this.idx = idx;
+            this.x = x;
+            this.y = y;
+        }
+
+        getPointCoord() {
+            return [this.x, this.y];
+        }
+    }
+
     static Triangle = class {
         constructor(a, b, c) {
             this.a = a;
             this.b = b;
             this.c = c;
-            this.circum = null;
+            this.circum = computeCircum(this.getPointsCoords());
+            this.radius = computeDst(a.getPointCoord(), this.circum);
         }
-        setCircum(circum) {
-            this.circum = circum;
+
+
+        isCircum(point) {
+            return computeDst(this.circum, point.getPointCoord()) < this.radius;
+        }
+
+        getPoints() {
+            return [this.a, this.b, this.c];
+        }
+
+        getPointsCoords() {
+            const coords = [];
+            for (const point of this.getPoints()) {
+                coords.push([point.x, point.y]);
+            }
+            return coords;
         }
 
         getEdges() {
@@ -20,7 +47,7 @@ class BowyerWatson {
         }
 
         static getEdgeString(edge) {
-            return Math.min(edge[0], edge[1]) + "_" + Math.max(edge[1], edge[0]);
+            return Math.min(edge[0].idx, edge[1].idx) + "_" + Math.max(edge[1].idx, edge[0].idx);
         }
 
         getEdgesString() {
@@ -54,9 +81,9 @@ class BowyerWatson {
         }
 
         for (const triangle of this.delaunay) {
-            this.drawEdge(this.nodes[triangle.a], this.nodes[triangle.b], true);
-            this.drawEdge(this.nodes[triangle.c], this.nodes[triangle.b], true);
-            this.drawEdge(this.nodes[triangle.a], this.nodes[triangle.c], true);
+            this.drawEdge(triangle.a.getPointCoord(), triangle.b.getPointCoord(), true);
+            this.drawEdge(triangle.c.getPointCoord(), triangle.b.getPointCoord(), true);
+            this.drawEdge(triangle.a.getPointCoord(), triangle.c.getPointCoord(), true);
         }
         for (const edge of this.voronoi) {
             this.drawEdge(edge[0], edge[1]);
@@ -64,23 +91,22 @@ class BowyerWatson {
     }
 
     triangulate() {
-        const supA = [-10, -10]
-        const supB = [20 + 10, -10];
-        const supC = [-10, 20+10];
+        const n = this.nodes.length;
+        const supA = new this.constructor.Point(n, -10, -10);
+        const supB = new this.constructor.Point(n+1, 20 + 10, -10);
+        const supC = new this.constructor.Point(n+2, -10, 20 + 10);
 
-        this.extendedNodes = [...this.nodes, supA, supB, supC];
-        const supTriangle = new this.constructor.Triangle(this.nodes.length, this.nodes.length + 1, this.nodes.length + 2);
-        supTriangle.setCircum(computeCircum(supTriangle, this.extendedNodes));
+        const supTriangle = new this.constructor.Triangle(supA, supB, supC);
         this.delaunay = [supTriangle];
 
         for (let i = 0; i < this.nodes.length; i++) {
-            this.addPoint(i);
+            this.addPoint(new this.constructor.Point(i, ...this.nodes[i]));
         }
 
         for (let idx = this.delaunay.length - 1; idx >= 0; idx--) {
             const triangle = this.delaunay[idx];
-            for (const node of [triangle.a, triangle.b, triangle.c]) {
-                if (node >= this.nodes.length) {
+            for (const point of triangle.getPoints()) {
+                if (point.idx >= this.nodes.length) {
                     // we should find an other datastructure to avoid expensive operation
                     this.delaunay.splice(idx, 1);
                     break;
@@ -89,35 +115,11 @@ class BowyerWatson {
         }
     }
 
-    computeVoronoi() {
-        const edgeTriangle = {};
-        for (const triangle of this.delaunay) {
-            for (const edge of triangle.getEdges()) {
-                const edgeString = this.constructor.Triangle.getEdgeString(edge);
-                if (!(edgeString in edgeTriangle)) {
-                    edgeTriangle[edgeString] = [];
-                }
-                edgeTriangle[edgeString].push(triangle);
-            }
-        }
-        this.voronoi = [];
-        for (const triangle of this.delaunay) {
-            for (const edgeString of triangle.getEdgesString(triangle)) {
-                for (const triangle2 of edgeTriangle[edgeString]) {
-                    if (triangle2 == triangle) {
-                        continue;
-                    }
-                    this.voronoi.push([triangle.circum, triangle2.circum]);
-                }
-            }
-        }
-    }
-
-    addPoint(i) {
+    addPoint(point) {
         const badTriangles = [];
         const sharedEdges = {};
         for (const triangle of this.delaunay) {
-            if (isCircum(triangle, i, this.extendedNodes)) {
+            if (triangle.isCircum(point)) {
                 badTriangles.push(triangle);
                 for (const edgeString of triangle.getEdgesString()) {
                     if (!(edgeString in sharedEdges)) {
@@ -143,9 +145,32 @@ class BowyerWatson {
         }
 
         for (const edge of polygon) {
-            const newTriangle = new this.constructor.Triangle(edge[0], edge[1], i);
+            const newTriangle = new this.constructor.Triangle(edge[0], edge[1], point);
             this.delaunay.push(newTriangle);
-            newTriangle.setCircum(computeCircum(newTriangle, this.extendedNodes));
+        }
+    }
+
+    computeVoronoi() {
+        const edgeTriangle = {};
+        for (const triangle of this.delaunay) {
+            for (const edge of triangle.getEdges()) {
+                const edgeString = this.constructor.Triangle.getEdgeString(edge);
+                if (!(edgeString in edgeTriangle)) {
+                    edgeTriangle[edgeString] = [];
+                }
+                edgeTriangle[edgeString].push(triangle);
+            }
+        }
+        this.voronoi = [];
+        for (const triangle of this.delaunay) {
+            for (const edgeString of triangle.getEdgesString(triangle)) {
+                for (const triangle2 of edgeTriangle[edgeString]) {
+                    if (triangle2 == triangle) {
+                        continue;
+                    }
+                    this.voronoi.push([triangle.circum, triangle2.circum]);
+                }
+            }
         }
     }
 }
