@@ -15,8 +15,8 @@ function recreateCanvas(delay) {
     }
     canvasTriangulation = document.createElement("canvas");
 
-    resizeCanvas(canvasTriangulation, window.innerWidth - 100, window.innerHeight - 100);
-    window.addEventListener("resize", () => resizeCanvas(canvasTriangulation, window.innerWidth - 100, window.innerHeight - 100));
+    resizeCanvas(canvasTriangulation, Math.min(window.innerWidth, window.innerHeight) - 80, Math.min(window.innerWidth, window.innerHeight) - 80);
+    window.addEventListener("resize", () => resizeCanvas(canvasTriangulation, Math.min(window.innerWidth, window.innerHeight) - 80, Math.min(window.innerWidth, window.innerHeight) - 80));
 
     triangulation = new Canvas(nodeData, NaiveBowyerWatson, canvasTriangulation);
     sectionCanvas.appendChild(canvasTriangulation);
