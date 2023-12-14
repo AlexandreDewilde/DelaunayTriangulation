@@ -1,9 +1,10 @@
-// based on https://en.wikipedia.org/wiki/Bowyer%E2%80%93Watson_algorithm
-// https://codeforces.com/blog/entry/85638
+// based on https://perso.uclouvain.be/vincent.legat/documents/meca2170/meshGenerationBook.pdf
+// Without hilbert curve sorting O(n^2)
+// With hilbert curve sorting O(n log(n))
 
 class EfficientBowyerWatson {
 
-    static Point = class {
+    static Vertex = class {
         constructor(idx, x, y) {
             this.idx = idx;
             this.x = x;
@@ -13,64 +14,68 @@ class EfficientBowyerWatson {
         getPointCoord() {
             return [this.x, this.y];
         }
+   }
+
+    static Edge = class {
+        constructor(v1, v2) {
+            if (v1.idx > v2.idx) {
+                [v1, v2] = [v2, v1];
+            }
+            this.v1 = v1;
+            this.v2 = v2;
+        }
+        compare(edge) {
+            if (this.v1.idx != edge.v1.idx) {
+                return this.v1.idx - edge.v1.idx;
+            }
+            return this.v2.idx - edge.v2.idx;
+        }
     }
 
-    static Triangle = class {
+    static Face = class {
         constructor(a, b, c) {
-            this.a = a;
-            this.b = b;
-            this.c = c;
+            this.vertex = [a, b, c];
+            this.vertex.sort((x, y) => x.idx - y.idx);
+            this.faces = [null, null, null];
+            this.deleted = false;
             this.circum = computeCircum(this.getPointsCoords());
             this.radius = computeDst(a.getPointCoord(), this.circum);
         }
-
-        toString() {
-            const idxs = [this.a.idx, this.b.idx, this.c.idx];
-            idxs.sort();
-            return `${idxs[0]}_${idxs[1]}_${idxs[2]}`;
-        }
-
 
         isCircum(point) {
             return computeDst(this.circum, point.getPointCoord()) < this.radius;
         }
 
-        getPoints() {
-            return [this.a, this.b, this.c];
+        getEdges() {
+            const ret = [];
+            for (let i = 0; i < 3; i++) {
+                ret.push(new EfficientBowyerWatson.Edge(this.vertex[i], this.vertex[(i+1)%3]));
+            }
+            return ret;
+        }
+
+        getEdge(i) {
+            return new EfficientBowyerWatson.Edge(this.vertex[i], this.vertex[(i+1)%3]);
         }
 
         getPointsCoords() {
             const coords = [];
-            for (const point of this.getPoints()) {
+            for (const point of this.vertex) {
                 coords.push([point.x, point.y]);
             }
             return coords;
         }
-
-        getEdges() {
-            return [[this.a, this.b], [this.b, this.c], [this.c, this.a]];
-        }
-
-        static getEdgeString(edge) {
-            return Math.min(edge[0].idx, edge[1].idx) + "_" + Math.max(edge[1].idx, edge[0].idx);
-        }
-
-        getEdgesString() {
-            const edges = this.getEdges();
-            const res = [];
-            for (const edge of edges) {
-                res.push(this.constructor.getEdgeString(edge));
-            }
-            return res;
-        }
     }
 
     constructor(nodes, drawingMethods) {
-
         this.nodes = nodes;
         this.drawingMethods = drawingMethods;
         this.delaunay = null;
         this.voronoi = null;
+    }
+
+    computeEdgeIndex(edge) {
+        return edge.v1.idx + edge.v2.idx * (this.nodes.length + 5);
     }
 
     draw() {
@@ -78,112 +83,122 @@ class EfficientBowyerWatson {
             this.drawingMethods.drawPoint(node, 5, "black", this.canvas);
         }
         if (!this.delaunay) {
-            this.triangulate();
+            // this.triangulate();
         }
         if (!this.voronoi) {
             this.computeVoronoi();
         }
-
-        for (const triangle of Object.values(this.delaunay)) {
-            this.drawingMethods.drawEdge(triangle.a.getPointCoord(), triangle.b.getPointCoord(), true);
-            this.drawingMethods.drawEdge(triangle.c.getPointCoord(), triangle.b.getPointCoord(), true);
-            this.drawingMethods.drawEdge(triangle.a.getPointCoord(), triangle.c.getPointCoord(), true);
-        }
-        for (const edge of this.voronoi) {
-            this.drawingMethods.drawEdge(edge[0], edge[1]);
+        for (const face of this.faces) {
+            for (const edge of face.getEdges()) {
+                this.drawingMethods.drawEdge(edge.v1.getPointCoord(), edge.v2.getPointCoord());
+            }
         }
     }
 
-    async triangulate(demo=0, random=true) {
+    getSuperTriangle() {
         const n = this.nodes.length;
-        const supA = new this.constructor.Point(n, -10, -10);
-        const supB = new this.constructor.Point(n+1, 20 + 10, -10);
-        const supC = new this.constructor.Point(n+2, -10, 20 + 10);
+        const supA = new this.constructor.Vertex(n, -10, -10);
+        const supB = new this.constructor.Vertex(n+1, 20 + 10, -10);
+        const supC = new this.constructor.Vertex(n+2, -10, 20 + 10);
 
-        const supTriangle = new this.constructor.Triangle(supA, supB, supC);
-        this.delaunay = {};
-        this.delaunay[supTriangle.toString()] = supTriangle;
+        return new this.constructor.Face(supA, supB, supC);
+    }
 
-        if (random) {
-            shuffleArray(this.nodes);
-        }
-
+    async triangulate(demo=0, random=true) {
+        this.faces = [this.getSuperTriangle(this.nodes)];
         for (let i = 0; i < this.nodes.length; i++) {
-            const point = new this.constructor.Point(i, ...this.nodes[i]);
-            this.addPoint(point);
-            if (demo) {
-                this.computeVoronoi();
-                await new Promise(r => setTimeout(r, demo));
+            console.log(this.faces);
+            const vertex = new this.constructor.Vertex(i, ...this.nodes[i]);
+            const f = this.lineSearch(this.faces[0], vertex);
+            const cavity = [];
+            const boundary = [];
+            const otherSide = [];
+            this.delaunayCavity(f, vertex, cavity, boundary, otherSide);
+            const cavityLen = cavity.length;
+            let j = 0;
+            for (; j < cavityLen; j++) {
+                cavity[j].deleted = false;
+                cavity[j].faces = [null, null, null];
+                cavity[j].vertex = [boundary[j].v1, boundary[j].v2, vertex];
+            }
+            for (; j < cavityLen + 2; j++) {
+                const newFace = new this.constructor.Face(boundary[j].v1, boundary[j].v2, vertex);
+                cavity.push(newFace);
+                this.faces.push(newFace);
+            }
+            for (j = 0; j < otherSide.length; j++) {
+                otherSide[j].deleted = false;
+                cavity.push(otherSide[j]);
+            }
+            this.computeAdjency(cavity);
+        }
+    }
+
+    computeAdjency(cavity) {
+        const edgeToFace = {};
+        for (const face of cavity) {
+            for (let i = 0; i < 3; i++) {
+                const edgeIdx = this.computeEdgeIndex(face.getEdge(i));
+                if (!(edgeIdx in edgeToFace)) {
+                    edgeToFace[edgeIdx] = [i, face];
+                }
+                else {
+                    const mapping = edgeToFace[edgeIdx];
+                    face.faces[i] = mapping[1];
+                    mapping[1].faces[mapping[0]] = face;
+                    delete edgeToFace[edgeIdx];
+                }
             }
         }
+    }
 
-        for (const triangleString of Object.values(this.delaunay)) {
-            const triangle = this.delaunay[triangleString];
-            for (const point of triangle.getPoints()) {
-                if (point.idx >= this.nodes.length) {
-                    delete this.delaunay[triangleString];
+    delaunayCavity(face, vertex, cavity, boundary, otherSides) {
+        const stack = [face];
+        while (stack.length) {
+            face = stack.pop();
+            if (face.deleted) {
+                continue;
+            }
+            face.deleted = true;
+            cavity.push(face);
+            for (let i = 0; i < 3; i++) {
+                const neighFace = face.faces[i];
+                if (!neighFace) {
+                    boundary.push(face.getEdge(i));
+                }
+                else if (neighFace.isCircum(vertex) == false) {
+                    boundary.push(face.getEdge(i));
+                    if (!neighFace.deleted) {
+                        neighFace.deleted = true;
+                        otherSides.push(neighFace);
+                    }
+                }
+                else {
+                    stack.push(neighFace);
+                }
+            }
+        }
+    }
+
+    lineSearch(face, vertex) {
+        while (true) {
+            if (face.isCircum(vertex)) {
+                return face;
+            }
+            const c = face.circum;
+            const edges = face.getEdges();
+            for (let i = 0; i < 3; i++) {
+                const edge = edges[i];
+                if (orientationTest(c, vertex, edge.v1) * orientationTest(c, vertex, edge.v2) < 0
+                    && orientationTest(e.v1, e.v2, c) * orientationTest(e.v1, e.v2, v) < 0) {
+                    face = face.faces[i];
                     break;
                 }
             }
         }
     }
 
-    addPoint(point) {
-        const badTriangles = [];
-        const sharedEdges = {};
-        for (const triangle of Object.values(this.delaunay)) {
-            if (triangle.isCircum(point)) {
-                badTriangles.push(triangle);
-                for (const edgeString of triangle.getEdgesString()) {
-                    if (!(edgeString in sharedEdges)) {
-                        sharedEdges[edgeString] = 0;
-                    }
-                    sharedEdges[edgeString]++;
-                }
-            }
-        }
-
-        const polygon = [];
-        for (const triangle of badTriangles) {
-            for (const edge of triangle.getEdges()) {
-                const sharedEdge = sharedEdges[this.constructor.Triangle.getEdgeString(edge)];
-                if (sharedEdge == 1) {
-                    polygon.push(edge);
-                }
-            }
-        }
-
-        for (const triangle of badTriangles) {
-            delete this.delaunay[triangle.toString()];
-        }
-
-        for (const edge of polygon) {
-            const newTriangle = new this.constructor.Triangle(edge[0], edge[1], point);
-            this.delaunay[newTriangle.toString()] = newTriangle;
-        }
-    }
-
     computeVoronoi() {
-        const edgeTriangle = {};
-        for (const triangle of Object.values(this.delaunay)) {
-            for (const edge of triangle.getEdges()) {
-                const edgeString = this.constructor.Triangle.getEdgeString(edge);
-                if (!(edgeString in edgeTriangle)) {
-                    edgeTriangle[edgeString] = [];
-                }
-                edgeTriangle[edgeString].push(triangle);
-            }
-        }
-        this.voronoi = [];
-        for (const triangle of Object.values(this.delaunay)) {
-            for (const edgeString of triangle.getEdgesString(triangle)) {
-                for (const triangle2 of edgeTriangle[edgeString]) {
-                    if (triangle2 == triangle) {
-                        continue;
-                    }
-                    this.voronoi.push([triangle.circum, triangle2.circum]);
-                }
-            }
-        }
+
     }
 }

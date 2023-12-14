@@ -12,3 +12,9 @@ function computeCircum(coords) {
     return [1 / D * (ah * (b[1] - c[1]) + bh * (c[1] - a[1]) + ch * (a[1] - b[1])),
                         1 / D * (ah * (c[0] - b[0]) + bh * (a[0] - c[0]) + ch * (b[0] - a[0]))];
 }
+
+function orientationTest(nodeA, nodeB, nodeC) {
+    // TODO deal with colinear points
+    // One way is: https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
+    return (nodeB[1] - nodeA[1]) * (nodeC[0] * nodeB[0]) - (nodeB[0] - nodeA[0]) * (nodeC[1] * nodeB[1]);
+}
