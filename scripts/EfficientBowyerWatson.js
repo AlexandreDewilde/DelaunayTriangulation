@@ -14,6 +14,12 @@ class EfficientBowyerWatson {
         getPointCoord() {
             return [this.x, this.y];
         }
+
+        orientationTest(b, c) {
+            // TODO deal with colinear points
+            // One way is: https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
+            return (b.y - this.y) * (c.x - b.x) - (b.x - this.x) * (c.y - b.y) < 0 ? -1 : 1;
+        }
    }
 
     static Edge = class {
@@ -44,6 +50,22 @@ class EfficientBowyerWatson {
 
         isCircum(point) {
             return computeDst(this.circum, point.getPointCoord()) < this.radius;
+        }
+
+        getCentroid() {
+            return [(this.vertex[0].x + this.vertex[1].x + this.vertex[2].x) / 3,
+            (this.vertex[0].y + this.vertex[1].y + this.vertex[2].y) / 3];
+        }
+
+        reset(a, b, c) {
+            this.vertex[0] = a;
+            this.vertex[1] = b;
+            this.vertex[2] = c;
+            this.vertex.sort((x, y) => x.idx - y.idx);
+            this.faces[0] = this.faces[1] = this.faces[2] = null;
+            this.deleted = false;
+            this.circum = computeCircum(this.getPointsCoords());
+            this.radius = computeDst(a.getPointCoord(), this.circum);
         }
 
         getEdges() {
@@ -82,8 +104,8 @@ class EfficientBowyerWatson {
         for (const node of this.nodes) {
             this.drawingMethods.drawPoint(node, 5, "black", this.canvas);
         }
-        if (!this.delaunay) {
-            // this.triangulate();
+        if (!this.faces) {
+            this.triangulate();
         }
         if (!this.voronoi) {
             this.computeVoronoi();
@@ -107,7 +129,6 @@ class EfficientBowyerWatson {
     async triangulate(demo=0, random=true) {
         this.faces = [this.getSuperTriangle(this.nodes)];
         for (let i = 0; i < this.nodes.length; i++) {
-            console.log(this.faces);
             const vertex = new this.constructor.Vertex(i, ...this.nodes[i]);
             const f = this.lineSearch(this.faces[0], vertex);
             const cavity = [];
@@ -117,9 +138,7 @@ class EfficientBowyerWatson {
             const cavityLen = cavity.length;
             let j = 0;
             for (; j < cavityLen; j++) {
-                cavity[j].deleted = false;
-                cavity[j].faces = [null, null, null];
-                cavity[j].vertex = [boundary[j].v1, boundary[j].v2, vertex];
+                cavity[j].reset(boundary[j].v1, boundary[j].v2, vertex);
             }
             for (; j < cavityLen + 2; j++) {
                 const newFace = new this.constructor.Face(boundary[j].v1, boundary[j].v2, vertex);
@@ -180,20 +199,30 @@ class EfficientBowyerWatson {
         }
     }
 
+    intersect(c, v, eMin, eMax) {
+        return c.orientationTest(v, eMin) * c.orientationTest(v, eMax) < 0
+            && eMin.orientationTest(eMax, c) * eMin.orientationTest(eMax, v) < 0;
+    }
+
     lineSearch(face, vertex) {
         while (true) {
             if (face.isCircum(vertex)) {
                 return face;
             }
-            const c = face.circum;
+            const c = new this.constructor.Vertex(-1, ...face.getCentroid());
             const edges = face.getEdges();
+            let found = false;
             for (let i = 0; i < 3; i++) {
                 const edge = edges[i];
-                if (orientationTest(c, vertex, edge.v1) * orientationTest(c, vertex, edge.v2) < 0
-                    && orientationTest(e.v1, e.v2, c) * orientationTest(e.v1, e.v2, v) < 0) {
+                // https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
+                if (this.intersect(c, vertex, edge.v1, edge.v2) && !found) {
                     face = face.faces[i];
+                    found = true;
                     break;
                 }
+            }
+            if (!found) {
+                return;
             }
         }
     }
