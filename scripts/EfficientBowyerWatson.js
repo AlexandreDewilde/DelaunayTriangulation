@@ -161,6 +161,9 @@ class EfficientBowyerWatson {
                 cavity.push(otherSide[j]);
             }
             this.computeAdjency(cavity);
+            if (demo) {
+                await new Promise(r => setTimeout(r, demo));
+            }
         }
     }
 
