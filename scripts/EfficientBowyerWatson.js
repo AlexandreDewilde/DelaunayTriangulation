@@ -101,8 +101,10 @@ class EfficientBowyerWatson {
     }
 
     draw() {
-        for (const node of this.nodes) {
+        for (let i = 0; i < this.nodes.length; i++) {
+            const node = this.nodes[i];
             this.drawingMethods.drawPoint(node, 5, "black", this.canvas);
+            this.drawingMethods.drawText(i, node[0], node[1]);
         }
         if (!this.faces) {
             this.triangulate();
@@ -112,6 +114,9 @@ class EfficientBowyerWatson {
         }
         for (const face of this.faces) {
             for (const edge of face.getEdges()) {
+                if (edge.v1.idx >= this.nodes.length || edge.v2.idx >= this.nodes.length) {
+                    continue;
+                }
                 this.drawingMethods.drawEdge(edge.v1.getPointCoord(), edge.v2.getPointCoord());
             }
         }
@@ -128,6 +133,12 @@ class EfficientBowyerWatson {
 
     async triangulate(demo=0, random=true) {
         this.faces = [this.getSuperTriangle(this.nodes)];
+        this.nodes.sort((x,y) => {
+            const res = hilbertCoord(x[0], x[1], 0, 0, 1, 0, 1, 0, 16);
+            const res2 = hilbertCoord(y[0], y[1], 0, 0, 1, 0, 1, 0, 16);
+            return res - res2;
+        });
+
         for (let i = 0; i < this.nodes.length; i++) {
             const vertex = new this.constructor.Vertex(i, ...this.nodes[i]);
             const f = this.lineSearch(this.faces[0], vertex);

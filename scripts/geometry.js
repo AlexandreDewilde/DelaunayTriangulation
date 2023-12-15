@@ -18,6 +18,42 @@ function orientationTest(nodeA, nodeB, nodeC) {
     // One way is: https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
     return (nodeB[1] - nodeA[1]) * (nodeC[0] * nodeB[0]) - (nodeB[0] - nodeA[0]) * (nodeC[1] * nodeB[1]);
 }
+
+// https://perso.uclouvain.be/vincent.legat/documents/meca2170/meshGenerationBook.pdf
+function hilbertCoord(x, y, x0, y0, xRed, yRed, xBlue, yBlue, d) {
+    let coord = 0;
+    for (let i = 0; i < d / 2; i++) {
+        const coordRed = (x - x0) * xRed + (y - y0) * yRed;
+        const coordBlue = (x - x0) * xBlue + (y -y0) * yBlue;
+        xRed /= 2; yRed /= 2; xBlue /= 2; yBlue /= 2;
+        if (coordRed <= 0 && coordBlue <= 0) {
+            x0 -= (xBlue + xRed);
+            y0 -= (yBlue + yRed);
+            [xRed, yRed, xBlue, yBlue] = [xBlue, yBlue, xRed, yRed];
+        }
+        else if (coordRed <= 0 && coordBlue >= 0) {
+            x0 += xBlue - xRed;
+            y0 += yBlue - yRed;
+            coord |= (1 << (d - i)*2);
+        }
+        else if (coordRed >= 0 && coordBlue >= 0) {
+            x0 += xBlue + xRed;
+            y0 += yBlue + yRed;
+            coord |= (1 << (d - i)*2+1)
+        }
+        else {
+            x0 += -xBlue + xRed;
+            y0 += -yBlue + yRed;
+            xBlue = -xBlue;
+            yBlue = -yBlue;
+            xRed = -xRed;
+            yRed = -yRed;
+            coord |= (1 << (d - i)*2) | (1 << (d - i)*2 + 1)
+        }
+    }
+    return coord
+}
+
 function areCollinear(point1, point2, point3) {
     // Calculate the slopes between pairs of points
     const slope1 = (point2[1] - point1[1]) / (point2[0] - point1[0]);

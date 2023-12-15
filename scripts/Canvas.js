@@ -2,7 +2,7 @@ class Canvas {
     constructor(nodes, algorithm, canvas) {
         this.canvas = canvas;
         this.nodes = nodes;
-        this.offset = 0;
+        this.offset = 15;
 
         this.sizeAdapt();
         window.addEventListener("resize", () => this.sizeAdapt());
@@ -66,7 +66,7 @@ class Canvas {
     drawText(text, x, y) {
         const context = this.canvas.getContext("2d");
         context.font = "20px sans-serif";
-        context.fillText(text, x, y);
+        context.fillText(text, ...this.transform([x, y], this.scale, this.xMin, this.yMin));
     }
 
     drawPath(path) {
@@ -101,7 +101,7 @@ class Canvas {
         for (const node of this.nodes) {
             this.scaledNodes.push(this.transform(node, scale, xMin, yMin));
         }
-        this.scale = scale;
+        this.scale = scale * 0.9;
         this.xMin = xMin;
         this.yMin = yMin;
         this.xMax = xMax;
