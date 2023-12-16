@@ -22,7 +22,7 @@ function recreateCanvas(delay) {
     sectionCanvas.appendChild(canvasTriangulation);
     demo = triangulation.start(delay);
 }
-buttonSkipDemo.addEventListener("click", () => recreateCanvas(0));
+buttonSkipDemo.addEventListener("click", () => recreateCanvas(1));
 
 buttonRestartDemo.addEventListener("click", () => recreateCanvas(1000));
 

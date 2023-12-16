@@ -124,9 +124,27 @@ class EfficientBowyerWatson {
 
     getSuperTriangle() {
         const n = this.nodes.length;
-        const supA = new this.constructor.Vertex(n, -10, -10);
-        const supB = new this.constructor.Vertex(n+1, 20 + 10, -10);
-        const supC = new this.constructor.Vertex(n+2, -10, 20 + 10);
+        //compute xmin, xmax and ymin, ymax to adapt the super triangle
+        const firstColumn = nodeData.map(function (row) {
+            return row[0];
+        });
+        
+        const secondColumn = nodeData.map(function (row) {
+            return row[1];
+        });
+        const xmin = Math.min(...firstColumn);
+        const xmax = Math.max(...firstColumn);
+        const ymin = Math.min(...secondColumn); 
+        const ymax = Math.max(...secondColumn);
+        const epsilon = 0.1 * Math.max(xmax - xmin, ymax - ymin); 
+
+        //const supA = new this.constructor.Vertex(n, -10, -10);
+        //const supB = new this.constructor.Vertex(n+1, 20 + 10, -10);
+        //const supC = new this.constructor.Vertex(n+2, -10, 20 + 10);
+
+        const supA = new this.constructor.Vertex(n, xmin-epsilon, ymin-epsilon);
+        const supB = new this.constructor.Vertex(n+1, xmin+2*(xmax-xmin)+3*epsilon,ymin-epsilon );
+        const supC = new this.constructor.Vertex(n+2, xmin-epsilon, ymin+2*(ymax-ymin)+3*epsilon);
 
         return new this.constructor.Face(supA, supB, supC);
     }
@@ -145,6 +163,7 @@ class EfficientBowyerWatson {
             const cavity = [];
             const boundary = [];
             const otherSide = [];
+            
             this.delaunayCavity(f, vertex, cavity, boundary, otherSide);
             const cavityLen = cavity.length;
             let j = 0;

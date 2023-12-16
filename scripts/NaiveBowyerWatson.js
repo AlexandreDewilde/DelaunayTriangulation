@@ -96,9 +96,27 @@ class NaiveBowyerWatson {
 
     async triangulate(demo=0, random=true) {
         const n = this.nodes.length;
-        const supA = new this.constructor.Point(n, -10, -10);
-        const supB = new this.constructor.Point(n+1, 20 + 10, -10);
-        const supC = new this.constructor.Point(n+2, -10, 20 + 10);
+        //const supA = new this.constructor.Point(n, -10, -10);
+        //const supB = new this.constructor.Point(n+1, 20 + 10, -10);
+        //const supC = new this.constructor.Point(n+2, -10, 20 + 10);
+
+        const firstColumn = nodeData.map(function (row) {
+            return row[0];
+        });
+                
+        const secondColumn = nodeData.map(function (row) {
+            return row[1];
+        });
+        const xmin = Math.min(...firstColumn);
+        const xmax = Math.max(...firstColumn);
+        const ymin = Math.min(...secondColumn);
+        const ymax = Math.max(...secondColumn);
+        const epsilon = 0.1 * Math.max(xmax - xmin, ymax - ymin); //10% de la plage maximale (max - min) dans l'une ou l'autre direction. 
+        
+        const supA = new this.constructor.Point(n, xmin-epsilon, ymin-epsilon);
+        const supB = new this.constructor.Point(n+1, xmin+2*(xmax-xmin)+3*epsilon,ymin-epsilon );
+        const supC = new this.constructor.Point(n+2, xmin-epsilon, ymin+2*(ymax-ymin)+3*epsilon);
+        
 
         const supTriangle = new this.constructor.Triangle(supA, supB, supC);
         this.delaunay = {};

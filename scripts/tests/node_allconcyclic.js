@@ -1,3 +1,4 @@
+//ce cas est degenere pour naive boyers watson mais le probleme est résolu grace au efficient bowyer-watson 
 var nodeData  = [
     [0.5, 0.2, 0],
     [0.2, 0.5, 0],
