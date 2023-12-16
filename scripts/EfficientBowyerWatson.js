@@ -128,15 +128,15 @@ class EfficientBowyerWatson {
         const firstColumn = nodeData.map(function (row) {
             return row[0];
         });
-        
+
         const secondColumn = nodeData.map(function (row) {
             return row[1];
         });
         const xmin = Math.min(...firstColumn);
         const xmax = Math.max(...firstColumn);
-        const ymin = Math.min(...secondColumn); 
+        const ymin = Math.min(...secondColumn);
         const ymax = Math.max(...secondColumn);
-        const epsilon = 0.1 * Math.max(xmax - xmin, ymax - ymin); 
+        const epsilon = 0.1 * Math.max(xmax - xmin, ymax - ymin);
 
         //const supA = new this.constructor.Vertex(n, -10, -10);
         //const supB = new this.constructor.Vertex(n+1, 20 + 10, -10);
@@ -159,11 +159,11 @@ class EfficientBowyerWatson {
 
         for (let i = 0; i < this.nodes.length; i++) {
             const vertex = new this.constructor.Vertex(i, ...this.nodes[i]);
-            const f = this.lineSearch(this.faces[0], vertex);
+            const f = this.lineSearch(this.faces[this.faces.length - 1], vertex);
             const cavity = [];
             const boundary = [];
             const otherSide = [];
-            
+
             this.delaunayCavity(f, vertex, cavity, boundary, otherSide);
             const cavityLen = cavity.length;
             let j = 0;
