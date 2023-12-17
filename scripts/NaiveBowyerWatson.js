@@ -77,13 +77,6 @@ class NaiveBowyerWatson {
         for (const node of this.nodes) {
             this.drawingMethods.drawPoint(node, 5, "black", this.canvas);
         }
-        if (!this.delaunay) {
-            this.triangulate();
-        }
-        if (!this.voronoi) {
-            this.computeVoronoi();
-        }
-
         for (const triangle of Object.values(this.delaunay)) {
             this.drawingMethods.drawEdge(triangle.a.getPointCoord(), triangle.b.getPointCoord(), true);
             this.drawingMethods.drawEdge(triangle.c.getPointCoord(), triangle.b.getPointCoord(), true);
@@ -96,14 +89,11 @@ class NaiveBowyerWatson {
 
     async triangulate(demo=0, random=true) {
         const n = this.nodes.length;
-        //const supA = new this.constructor.Point(n, -10, -10);
-        //const supB = new this.constructor.Point(n+1, 20 + 10, -10);
-        //const supC = new this.constructor.Point(n+2, -10, 20 + 10);
 
         const firstColumn = nodeData.map(function (row) {
             return row[0];
         });
-                
+
         const secondColumn = nodeData.map(function (row) {
             return row[1];
         });
@@ -111,12 +101,12 @@ class NaiveBowyerWatson {
         const xmax = Math.max(...firstColumn);
         const ymin = Math.min(...secondColumn);
         const ymax = Math.max(...secondColumn);
-        const epsilon = 0.1 * Math.max(xmax - xmin, ymax - ymin); //10% de la plage maximale (max - min) dans l'une ou l'autre direction. 
-        
+        const epsilon = 0.1 * Math.max(xmax - xmin, ymax - ymin); //10% de la plage maximale (max - min) dans l'une ou l'autre direction.
+
         const supA = new this.constructor.Point(n, xmin-epsilon, ymin-epsilon);
         const supB = new this.constructor.Point(n+1, xmin+2*(xmax-xmin)+3*epsilon,ymin-epsilon );
         const supC = new this.constructor.Point(n+2, xmin-epsilon, ymin+2*(ymax-ymin)+3*epsilon);
-        
+
 
         const supTriangle = new this.constructor.Triangle(supA, supB, supC);
         this.delaunay = {};
@@ -135,6 +125,7 @@ class NaiveBowyerWatson {
             }
         }
 
+        this.computeVoronoi();
         for (const triangleString of Object.values(this.delaunay)) {
             const triangle = this.delaunay[triangleString];
             for (const point of triangle.getPoints()) {
