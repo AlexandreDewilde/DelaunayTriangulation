@@ -83,8 +83,6 @@ function parseCollinear(nodes){
     console.log(n)
 }
 //encore tester pour d'autre cas puis faire la partie qui remplace par la moyenne des deux ou jsp
-parseCollinear(nodeData)
-
 //console.log(nodeData)
 
 
