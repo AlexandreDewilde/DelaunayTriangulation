@@ -109,16 +109,17 @@ class EfficientBowyerWatson {
         if (!this.faces) {
             this.triangulate();
         }
-        if (!this.voronoi) {
-            this.computeVoronoi();
-        }
         for (const face of this.faces) {
             for (const edge of face.getEdges()) {
                 if (edge.v1.idx >= this.nodes.length || edge.v2.idx >= this.nodes.length) {
                     continue;
                 }
-                this.drawingMethods.drawEdge(edge.v1.getPointCoord(), edge.v2.getPointCoord());
+                this.drawingMethods.drawEdge(edge.v1.getPointCoord(), edge.v2.getPointCoord(), true);
             }
+        }
+
+        for (const edge of this.voronoi) {
+            this.drawingMethods.drawEdge(edge[0], edge[1]);
         }
     }
 
@@ -180,6 +181,7 @@ class EfficientBowyerWatson {
                 cavity.push(otherSide[j]);
             }
             this.computeAdjency(cavity);
+            this.computeVoronoi();
             if (demo) {
                 await new Promise(r => setTimeout(r, demo));
             }
@@ -199,6 +201,31 @@ class EfficientBowyerWatson {
                     face.faces[i] = mapping[1];
                     mapping[1].faces[mapping[0]] = face;
                     delete edgeToFace[edgeIdx];
+                }
+            }
+        }
+    }
+
+    computeVoronoi() {
+        const edgeTriangle = {};
+        for (const face of this.faces) {
+            for (const edge of face.getEdges()) {
+                const edgeIdx = this.computeEdgeIndex(edge);
+                if (!(edgeIdx in edgeTriangle)) {
+                    edgeTriangle[edgeIdx] = [];
+                }
+                edgeTriangle[edgeIdx].push(face);
+            }
+        }
+        this.voronoi = [];
+        for (const face of this.faces) {
+            for (const edge of face.getEdges()) {
+                const edgeIdx = this.computeEdgeIndex(edge);
+                for (const face2 of edgeTriangle[edgeIdx]) {
+                    if (face2 == face) {
+                        continue;
+                    }
+                    this.voronoi.push([face.circum, face2.circum]);
                 }
             }
         }
@@ -258,9 +285,5 @@ class EfficientBowyerWatson {
                 return;
             }
         }
-    }
-
-    computeVoronoi() {
-
     }
 }
