@@ -51,8 +51,13 @@
         </nav>
     </header>
     <section class="section-options">
+        <span>Delay:</span>
+        <input type="range" id="range-demo-speed" value="100" min="0" max="2000"/>
         <button id="button-restart-demo">
             Restart Demo
+        </button>
+        <button id="button-download-gif">
+            Download gif
         </button>
         <button id="button-skip-demo">
             Skip Demo
@@ -61,6 +66,7 @@
     <section class="section-canvas" id="section-demo">
     </section>
 </body>
+<script src="../scripts/lib/gif.js"></script>
 <script src="../scripts/utils.js"></script>
 <script src="../scripts/nodes_coarse.js"></script>
 <script src="../scripts/geometry.js"></script>

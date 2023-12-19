@@ -32,7 +32,12 @@ class Canvas {
         });
 
         this.gif.on("finished", blob => {
-            window.open(URL.createObjectURL(blob));
+            const invisibleA = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            invisibleA.setAttribute("href", url);
+            invisibleA.setAttribute("download", "voronoi.gif");
+            document.body.appendChild(invisibleA);
+            invisibleA.click();
         });
     }
 
@@ -42,7 +47,7 @@ class Canvas {
             this.currentGif = true;
             this.createGif();
         }
-        await this.triangulation.triangulate(10);
+        await this.triangulation.triangulate(delay);
         if (gif) {
             this.gif.render();
             this.currentGif = false;
