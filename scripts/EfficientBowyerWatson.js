@@ -93,7 +93,8 @@ class EfficientBowyerWatson {
         this.nodes = nodes;
         this.drawingMethods = drawingMethods;
         this.delaunay = null;
-        this.voronoi = null;
+        this.voronoiFaces = null;
+        this.colors = [];
     }
 
     computeEdgeIndex(edge) {
@@ -101,6 +102,13 @@ class EfficientBowyerWatson {
     }
 
     draw() {
+        for (let i = 0; i < this.voronoiFaces.length; i++) {
+            const path = this.voronoiFaces[i];
+            if (this.colors.length <= i) {
+                this.colors.push(randomColor());
+            }
+            this.drawingMethods.drawPath(path, this.colors[i]);
+        }
         for (let i = 0; i < this.nodes.length; i++) {
             const node = this.nodes[i];
             this.drawingMethods.drawPoint(node, 5, "black", this.canvas);
@@ -116,10 +124,6 @@ class EfficientBowyerWatson {
                 }
                 this.drawingMethods.drawEdge(edge.v1.getPointCoord(), edge.v2.getPointCoord(), true);
             }
-        }
-
-        for (const edge of this.voronoi) {
-            this.drawingMethods.drawEdge(edge[0], edge[1]);
         }
     }
 
@@ -207,28 +211,32 @@ class EfficientBowyerWatson {
     }
 
     computeVoronoi() {
-        const edgeTriangle = {};
+        const pointCircums = {};
+        const vertexMatch = {};
         for (const face of this.faces) {
-            for (const edge of face.getEdges()) {
-                const edgeIdx = this.computeEdgeIndex(edge);
-                if (!(edgeIdx in edgeTriangle)) {
-                    edgeTriangle[edgeIdx] = [];
+            for (const vertex of face.vertex) {
+                if (!(vertex.idx in pointCircums)) {
+                    pointCircums[vertex.idx] = [];
+                    vertexMatch[vertex.idx] = vertex;
                 }
-                edgeTriangle[edgeIdx].push(face);
+                pointCircums[vertex.idx].push(face.circum);
             }
         }
-        this.voronoi = [];
-        for (const face of this.faces) {
-            for (const edge of face.getEdges()) {
-                const edgeIdx = this.computeEdgeIndex(edge);
-                for (const face2 of edgeTriangle[edgeIdx]) {
-                    if (face2 == face) {
-                        continue;
-                    }
-                    this.voronoi.push([face.circum, face2.circum]);
-                }
-            }
+        this.voronoiFaces = [];
+        for (const [ptIdx, lst] of Object.entries(pointCircums)) {
+            lst.sort((a,b) => this.polarSortCompare(a, b, vertexMatch[ptIdx].getPointCoord()));
+            this.voronoiFaces.push(lst);
         }
+    }
+
+    polarSortCompare(a, b, origin) {
+        const ac = [...a];
+        const bc = [...b];
+        ac[0] -= origin[0]; ac[1] -= origin[1];
+        bc[0] -= origin[0]; bc[1] -= origin[1];
+        const halfA = ac[1] > 0 || (ac[1] == 0 && ac[0] >= 0);
+        const halfB = bc[1] > 0 || (bc[1] == 0 && bc[0] >= 0);
+        return halfA == halfB ? ac[0] * bc[1] - ac[1] * bc[0] : halfA - halfB;
     }
 
     delaunayCavity(face, vertex, cavity, boundary, otherSides) {
