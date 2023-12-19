@@ -11,6 +11,10 @@ const buttonDownloadGif = document.getElementById("button-download-gif");
 const rangeDemoSpeed = document.getElementById("range-demo-speed");
 const fileNodes = document.getElementById("file-nodes");
 
+const rangeGenerateRandom = document.getElementById("range-generate-random");
+const buttonGenerateRandom = document.getElementById("button-generate-random");
+
+
 function recreateCanvas(delay, gif=false) {
     if (canvasTriangulation) {
         sectionCanvas.removeChild(canvasTriangulation);
@@ -36,6 +40,15 @@ rangeDemoSpeed.addEventListener("change", () => recreateCanvas(rangeDemoSpeed.va
 
 
 fileNodes.addEventListener("change", () => readFile(fileNodes.files[0]));
+
+
+buttonGenerateRandom.addEventListener("click", () => {
+    nodeData = [];
+    for (let i = 0; i < rangeGenerateRandom.value; i++) {
+        nodeData.push([Math.random(), Math.random()]);
+    }
+    recreateCanvas(rangeDemoSpeed.value);
+});
 
 sectionCanvas.addEventListener("dragover", (event) => {
     event.preventDefault();
