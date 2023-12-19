@@ -34,7 +34,19 @@ buttonDownloadGif.addEventListener("click", () => recreateCanvas(rangeDemoSpeed.
 
 rangeDemoSpeed.addEventListener("change", () => recreateCanvas(rangeDemoSpeed.value));
 
-fileNodes.addEventListener("change", () => {
+
+fileNodes.addEventListener("change", () => readFile(fileNodes.files[0]));
+
+sectionCanvas.addEventListener("dragover", (event) => {
+    event.preventDefault();
+});
+
+sectionCanvas.addEventListener("drop", event => {
+    event.preventDefault();
+    readFile(event.dataTransfer.files[0]);
+});
+
+function readFile(file) {
     const reader = new FileReader();
     reader.addEventListener("load", (event) => {
         const regex = /\[([\d.,\s]+)\]/g;
@@ -42,5 +54,5 @@ fileNodes.addEventListener("change", () => {
         nodeData = JSON.parse("[" + matches.join(",") + "]");
         recreateCanvas(rangeDemoSpeed.value);
     })
-    reader.readAsText(fileNodes.files[0]);
-});
+    reader.readAsText(file);
+};
