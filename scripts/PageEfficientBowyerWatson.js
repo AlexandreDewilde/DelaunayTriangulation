@@ -47,7 +47,7 @@ buttonGenerateRandom.addEventListener("click", () => {
     for (let i = 0; i < rangeGenerateRandom.value; i++) {
         nodeData.push([Math.random(), Math.random()]);
     }
-    recreateCanvas(rangeDemoSpeed.value);
+    triangulation.resetNodes(nodeData);
 });
 
 sectionCanvas.addEventListener("dragover", (event) => {
@@ -65,7 +65,7 @@ function readFile(file) {
         const regex = /\[([\d.,\s]+)\]/g;
         const matches = event.target.result.match(regex);
         nodeData = JSON.parse("[" + matches.join(",") + "]");
-        recreateCanvas(rangeDemoSpeed.value);
+        triangulation.resetNodes(nodeData);
     })
     reader.readAsText(file);
 };

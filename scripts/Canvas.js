@@ -21,6 +21,7 @@ class Canvas {
         this.nodes = nodes;
         this.sizeAdapt();
         this.triangulation = new this.algorithm(this.nodes, this.drawingMethods);
+        this.triangulation.triangulate(this.delay);
     }
 
     createGif() {
@@ -42,6 +43,7 @@ class Canvas {
     }
 
     async start(delay=0, gif=false) {
+        this.delay = delay;
         setInterval(this.draw.bind(this), 1000/60);
         if (gif) {
             this.currentGif = true;
