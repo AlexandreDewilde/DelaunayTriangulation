@@ -23,16 +23,39 @@ class Canvas {
         this.triangulation = new this.algorithm(this.nodes, this.drawingMethods);
     }
 
-    async start(delay=0) {
-        this.triangulation.triangulate(delay);
+    createGif() {
+        this.gif = new GIF({
+            quality: 10,
+            height: this.canvas.height,
+            width: this.canvas.width,
+            workerScript: "/scripts/lib/gif.worker.js"
+        });
+
+        this.gif.on("finished", blob => {
+            window.open(URL.createObjectURL(blob));
+        });
+    }
+
+    async start(delay=0, gif=false) {
         setInterval(this.draw.bind(this), 1000/60);
+        if (gif) {
+            this.currentGif = true;
+            this.createGif();
+        }
+        await this.triangulation.triangulate(10);
+        if (gif) {
+            this.gif.render();
+            this.currentGif = false;
+        }
     }
 
     draw() {
         this.clearCanvas();
         this.triangulation.draw();
+        if (this.currentGif) {
+            this.gif.addFrame(this.canvas.getContext("2d"), {copy: true});
+        }
     }
-
 
     clearCanvas() {
         const context = this.canvas.getContext("2d");
@@ -69,9 +92,7 @@ class Canvas {
         context.fillText(text, ...this.transform([x, y], this.scale, this.xMin, this.yMin));
     }
 
-    drawPath(path) {
-        const colors = ["red", "blue", "orange", "black"];
-        const color = colors[3];//colors[Math.floor(Math.random() * (colors.length-1))];
+    drawPath(path, color) {
         const context = this.canvas.getContext("2d");
         context.beginPath();
         context.moveTo(...this.transform(path[0], this.scale, this.xMin, this.yMin));
@@ -101,7 +122,7 @@ class Canvas {
         for (const node of this.nodes) {
             this.scaledNodes.push(this.transform(node, scale, xMin, yMin));
         }
-        this.scale = scale * 0.9;
+        this.scale = scale * 0.97;
         this.xMin = xMin;
         this.yMin = yMin;
         this.xMax = xMax;
