@@ -89,63 +89,51 @@ class EfficientBowyerWatson {
         }
     }
 
-    constructor(nodes, drawingMethods) {
+    constructor(nodes, demoDelay) {
         this.nodes = nodes;
-        this.drawingMethods = drawingMethods;
+        this.demoDelay = demoDelay;
         this.delaunay = null;
         this.voronoiFaces = null;
-        this.colors = [];
     }
 
     computeEdgeIndex(edge) {
         return edge.v1.idx + edge.v2.idx * (this.nodes.length + 5);
     }
 
-    draw() {
-        for (let i = 0; i < this.voronoiFaces.length; i++) {
-            const path = this.voronoiFaces[i];
-            if (this.colors.length <= i) {
-                this.colors.push(randomColor());
-            }
-            this.drawingMethods.drawPath(path, this.colors[i]);
-        }
-        for (let i = 0; i < this.nodes.length; i++) {
-            const node = this.nodes[i];
-            this.drawingMethods.drawPoint(node, 5, "black", this.canvas);
-            this.drawingMethods.drawText(i, node[0], node[1]);
-        }
+    getDelaunayEdges() {
         if (!this.faces) {
             this.triangulate();
         }
+        const edges = [];
         for (const face of this.faces) {
             for (const edge of face.getEdges()) {
                 if (edge.v1.idx >= this.nodes.length || edge.v2.idx >= this.nodes.length) {
                     continue;
                 }
-                this.drawingMethods.drawEdge(edge.v1.getPointCoord(), edge.v2.getPointCoord(), true);
+                edges.push([edge.v1.getPointCoord(), edge.v2.getPointCoord()]);
             }
         }
+        return edges;
+    }
+
+    getVoronoiFaces() {
+        if (!this.voronoiFaces) {
+            if (!this.faces) {
+                this.triangulate();
+            }
+            this.computeVoronoi();
+        }
+        return this.voronoiFaces;
+    }
+
+    getNodes() {
+       return this.nodes;
     }
 
     getSuperTriangle() {
         const n = this.nodes.length;
-        //compute xmin, xmax and ymin, ymax to adapt the super triangle
-        const firstColumn = nodeData.map(function (row) {
-            return row[0];
-        });
-
-        const secondColumn = nodeData.map(function (row) {
-            return row[1];
-        });
-        const xmin = Math.min(...firstColumn);
-        const xmax = Math.max(...firstColumn);
-        const ymin = Math.min(...secondColumn);
-        const ymax = Math.max(...secondColumn);
+        const [xmin, xmax, ymin, ymax] = minAndMaxNodes(this.nodes);
         const epsilon = 0.1 * Math.max(xmax - xmin, ymax - ymin);
-
-        //const supA = new this.constructor.Vertex(n, -10, -10);
-        //const supB = new this.constructor.Vertex(n+1, 20 + 10, -10);
-        //const supC = new this.constructor.Vertex(n+2, -10, 20 + 10);
 
         const supA = new this.constructor.Vertex(n, xmin-epsilon, ymin-epsilon);
         const supB = new this.constructor.Vertex(n+1, xmin+2*(xmax-xmin)+3*epsilon,ymin-epsilon );
@@ -154,42 +142,50 @@ class EfficientBowyerWatson {
         return new this.constructor.Face(supA, supB, supC);
     }
 
-    async triangulate(demo=0, random=true) {
-        this.faces = [this.getSuperTriangle(this.nodes)];
-        this.nodes.sort((x,y) => {
+    hilbertSort(nodes) {
+        nodes.sort((x,y) => {
             const res = hilbertCoord(x[0], x[1], 0, 0, 1, 0, 1, 0, 16);
             const res2 = hilbertCoord(y[0], y[1], 0, 0, 1, 0, 1, 0, 16);
             return res - res2;
         });
+    }
+
+    async triangulate() {
+        this.faces = [this.getSuperTriangle(this.nodes)];
+        this.hilbertSort(this.nodes);
 
         for (let i = 0; i < this.nodes.length; i++) {
-            const vertex = new this.constructor.Vertex(i, ...this.nodes[i]);
-            const f = this.lineSearch(this.faces[this.faces.length - 1], vertex);
-            const cavity = [];
-            const boundary = [];
-            const otherSide = [];
-
-            this.delaunayCavity(f, vertex, cavity, boundary, otherSide);
-            const cavityLen = cavity.length;
-            let j = 0;
-            for (; j < cavityLen; j++) {
-                cavity[j].reset(boundary[j].v1, boundary[j].v2, vertex);
-            }
-            for (; j < cavityLen + 2; j++) {
-                const newFace = new this.constructor.Face(boundary[j].v1, boundary[j].v2, vertex);
-                cavity.push(newFace);
-                this.faces.push(newFace);
-            }
-            for (j = 0; j < otherSide.length; j++) {
-                otherSide[j].deleted = false;
-                cavity.push(otherSide[j]);
-            }
-            this.computeAdjency(cavity);
-            this.computeVoronoi();
-            if (demo) {
-                await new Promise(r => setTimeout(r, demo));
+            this.addPoint(i);
+            if (this.demoDelay) {
+                await new Promise(r => setTimeout(r, this.demoDelay));
             }
         }
+    }
+
+    addPoint(i) {
+        const vertex = new this.constructor.Vertex(i, ...this.nodes[i]);
+        const f = this.lineSearch(this.faces[this.faces.length - 1], vertex);
+        const cavity = [];
+        const boundary = [];
+        const otherSide = [];
+
+        this.delaunayCavity(f, vertex, cavity, boundary, otherSide);
+        const cavityLen = cavity.length;
+        let j = 0;
+        for (; j < cavityLen; j++) {
+            cavity[j].reset(boundary[j].v1, boundary[j].v2, vertex);
+        }
+        for (; j < cavityLen + 2; j++) {
+            const newFace = new this.constructor.Face(boundary[j].v1, boundary[j].v2, vertex);
+            cavity.push(newFace);
+            this.faces.push(newFace);
+        }
+        for (j = 0; j < otherSide.length; j++) {
+            otherSide[j].deleted = false;
+            cavity.push(otherSide[j]);
+        }
+        this.computeAdjency(cavity);
+        this.computeVoronoi();
     }
 
     computeAdjency(cavity) {
@@ -267,9 +263,10 @@ class EfficientBowyerWatson {
         }
     }
 
-    intersect(c, v, eMin, eMax) {
-        return c.orientationTest(v, eMin) * c.orientationTest(v, eMax) < 0
-            && eMin.orientationTest(eMax, c) * eMin.orientationTest(eMax, v) < 0;
+    intersect(a, b, c, d) {
+        // https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
+        return a.orientationTest(b, c) * a.orientationTest(b, d) < 0
+            && c.orientationTest(d, a) * c.orientationTest(d, b) < 0;
     }
 
     lineSearch(face, vertex) {
@@ -282,7 +279,6 @@ class EfficientBowyerWatson {
             let found = false;
             for (let i = 0; i < 3; i++) {
                 const edge = edges[i];
-                // https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
                 if (this.intersect(c, vertex, edge.v1, edge.v2) && !found) {
                     face = face.faces[i];
                     found = true;
