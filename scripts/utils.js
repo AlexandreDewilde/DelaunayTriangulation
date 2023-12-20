@@ -29,3 +29,18 @@ function randomColor() {
 
     return colors[Math.floor(Math.random() * colors.length)];
 }
+
+
+function minAndMaxNodes(nodes) {
+    let xMin = Number.MAX_VALUE;
+    let xMax = Number.MIN_VALUE;
+    let yMin = Number.MAX_VALUE;
+    let yMax = Number.MIN_VALUE;
+    for (let i = 0; i < nodes.length; i++) {
+        xMin = Math.min(xMin, nodes[i][0]);
+        xMax = Math.max(xMax, nodes[i][0]);
+        yMin = Math.min(yMin, nodes[i][1]);
+        yMax = Math.max(yMax, nodes[i][1]);
+    }
+    return [xMin, xMax, yMin, yMax];
+}
