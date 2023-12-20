@@ -73,6 +73,12 @@ class NaiveBowyerWatson {
         this.voronoi = null;
     }
 
+    updateNodes(nodes) {
+        this.nodes = nodes;
+        this.faces = null;
+        this.voronoiFaces = null;
+    }
+
     getNodes() {
         return this.nodes;
     }
