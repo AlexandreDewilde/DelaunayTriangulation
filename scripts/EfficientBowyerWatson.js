@@ -226,19 +226,9 @@ class EfficientBowyerWatson {
         }
         this.voronoiFaces = [];
         for (const [ptIdx, lst] of Object.entries(pointCircums)) {
-            lst.sort((a,b) => this.polarSortCompare(a, b, vertexMatch[ptIdx].getPointCoord()));
+            lst.sort((a,b) => polarSortCompare(a, b, vertexMatch[ptIdx].getPointCoord()));
             this.voronoiFaces.push(lst);
         }
-    }
-
-    polarSortCompare(a, b, origin) {
-        const ac = [...a];
-        const bc = [...b];
-        ac[0] -= origin[0]; ac[1] -= origin[1];
-        bc[0] -= origin[0]; bc[1] -= origin[1];
-        const halfA = ac[1] > 0 || (ac[1] == 0 && ac[0] >= 0);
-        const halfB = bc[1] > 0 || (bc[1] == 0 && bc[0] >= 0);
-        return halfA == halfB ? ac[0] * bc[1] - ac[1] * bc[0] : halfA - halfB;
     }
 
     delaunayCavity(face, vertex, cavity, boundary, otherSides) {
