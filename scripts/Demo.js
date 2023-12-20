@@ -15,6 +15,8 @@ function createDemo(algorithm) {
     const checkboxShowNodesNumbers = document.getElementById("checkbox-show-nodes-numbers");
     const checkboxShowTriangulation = document.getElementById("checkbox-show-triangulation");
 
+    const rangeNodeSize = document.getElementById("range-node-size");
+    const rangeFontSize = document.getElementById("range-font-size");
     resizeCanvas(canvasTriangulation, Math.min(window.innerWidth, window.innerHeight) - 120, Math.min(window.innerWidth, window.innerHeight) - 120);
     window.addEventListener("resize", () => resizeCanvas(canvasTriangulation, Math.min(window.innerWidth, window.innerHeight) - 120, Math.min(window.innerWidth, window.innerHeight) - 120));
 
@@ -22,10 +24,16 @@ function createDemo(algorithm) {
         showNodes: checkBoxShowNodes.checked,
         showTextNodes: checkboxShowNodesNumbers.checked,
         showTriangulation: checkboxShowTriangulation.checked,
+        nodeSize: rangeNodeSize.value,
+        fontSize: rangeFontSize.value,
     });
 
     triangulation.updateDemoDelay(rangeDemoSpeed.value);
     triangulation.start();
+
+    rangeFontSize.addEventListener("change", () => triangulation.updateOption("fontSize", rangeFontSize.value));
+
+    rangeNodeSize.addEventListener("change", () => triangulation.updateOption("nodeSize", rangeNodeSize.value));
 
     buttonSkipDemo.addEventListener("click", () => triangulation.updateDemoDelay(0));
 

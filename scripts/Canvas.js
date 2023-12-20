@@ -17,6 +17,8 @@ class Canvas {
             showNodes: true,
             showNodesNumbers: true,
             showTriangulation: true,
+            nodeSize: 5,
+            fontSize: 15,
         }
 
         if (options) {
@@ -140,11 +142,10 @@ class Canvas {
     }
 
     drawPoint(node) {
-        const size = 5;
         const context = this.canvas.getContext('2d');
         context.fillStyle = "black";
         context.beginPath();
-        context.arc(...this.transform(node, this.scale, this.xMin, this.yMin), size, 0, 2 * Math.PI);
+        context.arc(...this.transform(node, this.scale, this.xMin, this.yMin), this.options.nodeSize, 0, 2 * Math.PI);
         context.fill();
     }
 
@@ -166,7 +167,7 @@ class Canvas {
     drawText(text, x, y) {
         const context = this.canvas.getContext("2d");
         context.fillStyle = "black";
-        context.font = "20px sans-serif";
+        context.font = `${this.options.fontSize}px sans-serif`;
         context.fillText(text, ...this.transform([x, y], this.scale, this.xMin, this.yMin));
     }
 
