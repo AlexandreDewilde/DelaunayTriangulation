@@ -73,18 +73,31 @@ class NaiveBowyerWatson {
         this.voronoi = null;
     }
 
-    draw() {
-        for (const node of this.nodes) {
-            this.drawingMethods.drawPoint(node, 5, "black", this.canvas);
+    getNodes() {
+        return this.nodes;
+    }
+
+    getDelaunayEdges() {
+        if (!this.delaunay) {
+            this.triangulate();
         }
+        const edges = [];
         for (const triangle of Object.values(this.delaunay)) {
-            this.drawingMethods.drawEdge(triangle.a.getPointCoord(), triangle.b.getPointCoord(), true);
-            this.drawingMethods.drawEdge(triangle.c.getPointCoord(), triangle.b.getPointCoord(), true);
-            this.drawingMethods.drawEdge(triangle.a.getPointCoord(), triangle.c.getPointCoord(), true);
+            edges.push([triangle.a.getPointCoord(), triangle.b.getPointCoord()]);
+            edges.push([triangle.c.getPointCoord(), triangle.b.getPointCoord()]);
+            edges.push([triangle.a.getPointCoord(), triangle.c.getPointCoord()]);
         }
-        for (const edge of this.voronoi) {
-            this.drawingMethods.drawEdge(edge[0], edge[1]);
+        return edges;
+    }
+
+    getVoronoiFaces() {
+        if (!this.delaunay) {
+            this.triangulate();
         }
+        if (!this.voronoi) {
+            this.computeVoronoi();
+        }
+        return this.voronoi;
     }
 
     async triangulate(demo=0, random=true) {
@@ -173,26 +186,21 @@ class NaiveBowyerWatson {
     }
 
     computeVoronoi() {
-        const edgeTriangle = {};
+        const pointCircums = {};
+        const vertexMatch = {};
         for (const triangle of Object.values(this.delaunay)) {
-            for (const edge of triangle.getEdges()) {
-                const edgeString = this.constructor.Triangle.getEdgeString(edge);
-                if (!(edgeString in edgeTriangle)) {
-                    edgeTriangle[edgeString] = [];
+            for (const vertex of [triangle.a, triangle.b, triangle.c]) {
+                if (!(vertex.idx in pointCircums)) {
+                    pointCircums[vertex.idx] = [];
+                    vertexMatch[vertex.idx] = vertex;
                 }
-                edgeTriangle[edgeString].push(triangle);
+                pointCircums[vertex.idx].push(triangle.circum);
             }
         }
         this.voronoi = [];
-        for (const triangle of Object.values(this.delaunay)) {
-            for (const edgeString of triangle.getEdgesString(triangle)) {
-                for (const triangle2 of edgeTriangle[edgeString]) {
-                    if (triangle2 == triangle) {
-                        continue;
-                    }
-                    this.voronoi.push([triangle.circum, triangle2.circum]);
-                }
-            }
+        for (const [ptIdx, lst] of Object.entries(pointCircums)) {
+            lst.sort((a,b) => polarSortCompare(a, b, vertexMatch[ptIdx].getPointCoord()));
+            this.voronoi.push(lst);
         }
     }
 }

@@ -41,7 +41,7 @@ class Canvas {
 
     createGif() {
         this.gif = new GIF({
-            quality: 20,
+            quality: 100,
             height: this.canvas.height,
             width: this.canvas.width,
             workers: 4,
