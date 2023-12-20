@@ -65,10 +65,10 @@ class NaiveBowyerWatson {
         }
     }
 
-    constructor(nodes, drawingMethods) {
+    constructor(nodes, demoDelay) {
 
         this.nodes = nodes;
-        this.drawingMethods = drawingMethods;
+        this.demoDelay = demoDelay;
         this.delaunay = null;
         this.voronoi = null;
     }
@@ -132,9 +132,9 @@ class NaiveBowyerWatson {
         for (let i = 0; i < this.nodes.length; i++) {
             const point = new this.constructor.Point(i, ...this.nodes[i]);
             this.addPoint(point);
-            if (demo) {
+            if (this.demoDelay) {
                 this.computeVoronoi();
-                await new Promise(r => setTimeout(r, demo));
+                await new Promise(r => setTimeout(r, this.demoDelay));
             }
         }
 
