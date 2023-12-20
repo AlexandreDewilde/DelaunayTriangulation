@@ -7,21 +7,16 @@ class Canvas {
         this.sizeAdapt();
         window.addEventListener("resize", () => this.sizeAdapt());
 
-        this.drawingMethods = {
-            drawPoint: this.drawPoint.bind(this),
-            drawEdge: this.drawEdge.bind(this),
-            drawText: this.drawText.bind(this),
-            drawPath: this.drawPath.bind(this),
-        }
+        this.voronoiColors = [];
         this.algorithm = algorithm
-        this.triangulation = new algorithm(this.nodes, this.drawingMethods);
+        this.triangulation = new algorithm(this.nodes, 0);
     }
 
     resetNodes(nodes) {
         this.nodes = nodes;
         this.sizeAdapt();
         this.triangulation = new this.algorithm(this.nodes, this.drawingMethods);
-        this.triangulation.triangulate(this.delay);
+        this.triangulation.triangulate();
     }
 
     createGif() {
@@ -42,14 +37,18 @@ class Canvas {
         });
     }
 
-    async start(delay=0, gif=false) {
-        this.delay = delay;
+    updateDemoDelay(demoDelay) {
+        this.demoDelay = demoDelay;
+        this.triangulation.demoDelay = demoDelay;
+    }
+
+    async start(gif=false) {
         setInterval(this.draw.bind(this), 1000/60);
         if (gif) {
             this.currentGif = true;
             this.createGif();
         }
-        await this.triangulation.triangulate(delay);
+        await this.triangulation.triangulate();
         if (gif) {
             this.gif.render();
             this.currentGif = false;
@@ -58,9 +57,38 @@ class Canvas {
 
     draw() {
         this.clearCanvas();
-        this.triangulation.draw();
+        this.drawVoronoi();
+        this.drawPoints();
+        this.drawDelaunay();
         if (this.currentGif) {
             this.gif.addFrame(this.canvas.getContext("2d"), {copy: true});
+        }
+    }
+
+    drawDelaunay() {
+        const edges = this.triangulation.getDelaunayEdges();
+        for (const edge of edges) {
+            this.drawEdge(...edge, true);
+        }
+    }
+
+    drawVoronoi() {
+        const voronoiFaces = this.triangulation.getVoronoiFaces();
+        for (let i = 0; i < voronoiFaces.length; i++) {
+            const path = voronoiFaces[i];
+            if (this.voronoiColors.length <= i) {
+                this.voronoiColors.push(randomColor());
+            }
+            this.drawPath(path, this.voronoiColors[i]);
+        }
+    }
+
+    drawPoints() {
+        const nodes = this.triangulation.getNodes();
+        for (let i = 0; i < nodes.length; i++) {
+            const node = nodes[i];
+            this.drawPoint(node, 5, "black", this.canvas);
+            this.drawText(i, node[0], node[1]);
         }
     }
 
@@ -111,16 +139,7 @@ class Canvas {
     }
 
     sizeAdapt() {
-        let xMin = Number.MAX_VALUE;
-        let yMin = Number.MAX_VALUE;
-        let xMax = Number.MIN_VALUE;
-        let yMax = Number.MIN_VALUE;
-        for (const node of this.nodes) {
-            xMax = Math.max(xMax, node[0]);
-            xMin = Math.min(xMin, node[0]);
-            yMax = Math.max(yMax, node[1]);
-            yMin = Math.min(yMin, node[1]);
-        }
+        const [xMin, xMax, yMin, yMax] = minAndMaxNodes(this.nodes);
         const xRange = xMax - xMin;
         const yRange = yMax - yMin;
         const scale = Math.min(this.canvas.width/xRange, this.canvas.height/yRange);
@@ -129,6 +148,7 @@ class Canvas {
         for (const node of this.nodes) {
             this.scaledNodes.push(this.transform(node, scale, xMin, yMin));
         }
+
         this.scale = scale * 0.97;
         this.xMin = xMin;
         this.yMin = yMin;
