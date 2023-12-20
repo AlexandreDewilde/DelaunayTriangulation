@@ -54,6 +54,16 @@ function hilbertCoord(x, y, x0, y0, xRed, yRed, xBlue, yBlue, d) {
     return coord
 }
 
+function polarSortCompare(a, b, origin) {
+    const ac = [...a];
+    const bc = [...b];
+    ac[0] -= origin[0]; ac[1] -= origin[1];
+    bc[0] -= origin[0]; bc[1] -= origin[1];
+    const halfA = ac[1] > 0 || (ac[1] == 0 && ac[0] >= 0);
+    const halfB = bc[1] > 0 || (bc[1] == 0 && bc[0] >= 0);
+    return halfA == halfB ? ac[0] * bc[1] - ac[1] * bc[0] : halfA - halfB;
+}
+
 function areCollinear(point1, point2, point3) {
     // Calculate the slopes between pairs of points
     const slope1 = (point2[1] - point1[1]) / (point2[0] - point1[0]);
