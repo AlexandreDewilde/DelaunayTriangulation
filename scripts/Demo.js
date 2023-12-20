@@ -13,14 +13,15 @@ function createDemo(algorithm) {
     const buttonGenerateRandom = document.getElementById("button-generate-random");
     const checkBoxShowNodes = document.getElementById("checkbox-show-nodes");
     const checkboxShowNodesNumbers = document.getElementById("checkbox-show-nodes-numbers");
-
+    const checkboxShowTriangulation = document.getElementById("checkbox-show-triangulation");
 
     resizeCanvas(canvasTriangulation, Math.min(window.innerWidth, window.innerHeight) - 120, Math.min(window.innerWidth, window.innerHeight) - 120);
     window.addEventListener("resize", () => resizeCanvas(canvasTriangulation, Math.min(window.innerWidth, window.innerHeight) - 120, Math.min(window.innerWidth, window.innerHeight) - 120));
 
     const triangulation = new Canvas(nodeData, algorithm, canvasTriangulation, {
-        showNodes: checkBoxShowNodes.value,
-        showTextNodes: checkboxShowNodesNumbers.value,
+        showNodes: checkBoxShowNodes.checked,
+        showTextNodes: checkboxShowNodesNumbers.checked,
+        showTriangulation: checkboxShowTriangulation.checked,
     });
 
     triangulation.updateDemoDelay(rangeDemoSpeed.value);
@@ -28,21 +29,26 @@ function createDemo(algorithm) {
 
     buttonSkipDemo.addEventListener("click", () => triangulation.updateDemoDelay(0));
 
-    buttonRestartDemo.addEventListener("click", () => triangulation.start());
+    buttonRestartDemo.addEventListener("click", () => triangulation.restart(rangeDemoSpeed.value));
 
-    buttonDownloadGif.addEventListener("click", () => triangulation.start(true));
+    buttonDownloadGif.addEventListener("click", () => triangulation.restart(rangeDemoSpeed.value, true));
 
     rangeDemoSpeed.addEventListener("change", () => triangulation.updateDemoDelay(rangeDemoSpeed.value));
 
-
     fileNodes.addEventListener("change", () => readFile(fileNodes.files[0]));
 
+    checkBoxShowNodes.addEventListener("change", () => triangulation.updateOption("showNodes", checkBoxShowNodes.checked));
+
+    checkboxShowNodesNumbers.addEventListener("change", () => triangulation.updateOption("showNodesNumbers", checkboxShowNodesNumbers.checked));
+
+    checkboxShowTriangulation.addEventListener("change", () => triangulation.updateOption("showTriangulation", checkboxShowTriangulation.checked))
 
     buttonGenerateRandom.addEventListener("click", () => {
         nodeData = [];
         for (let i = 0; i < rangeGenerateRandom.value; i++) {
             nodeData.push([Math.random(), Math.random()]);
         }
+        triangulation.updateDemoDelay(rangeDemoSpeed.value);
         triangulation.resetNodes(nodeData);
     });
 

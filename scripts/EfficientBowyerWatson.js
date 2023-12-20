@@ -130,6 +130,12 @@ class EfficientBowyerWatson {
        return this.nodes;
     }
 
+    updateNodes(nodes) {
+        this.nodes = nodes;
+        this.faces = null;
+        this.voronoiFaces = null;
+    }
+
     getSuperTriangle() {
         const n = this.nodes.length;
         const [xmin, xmax, ymin, ymax] = minAndMaxNodes(this.nodes);
@@ -239,7 +245,7 @@ class EfficientBowyerWatson {
         const stack = [face];
         while (stack.length) {
             face = stack.pop();
-            if (face.deleted) {
+            if (!face || face.deleted) {
                 continue;
             }
             face.deleted = true;

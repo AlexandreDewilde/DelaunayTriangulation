@@ -1,8 +1,10 @@
 class Canvas {
-    constructor(nodes, algorithm, canvas) {
+    constructor(nodes, algorithm, canvas, options) {
         this.canvas = canvas;
         this.nodes = nodes;
-        this.offset = 15;
+        this.offset = 0;
+
+        this.currentPromise = null;
 
         this.sizeAdapt();
         window.addEventListener("resize", () => this.sizeAdapt());
@@ -10,20 +12,38 @@ class Canvas {
         this.voronoiColors = [];
         this.algorithm = algorithm
         this.triangulation = new algorithm(this.nodes, 0);
+
+        this.options = {
+            showNodes: true,
+            showNodesNumbers: true,
+            showTriangulation: true,
+        }
+
+        if (options) {
+            for (const [key, value] of Object.entries(options)) {
+                this.options[key] = value;
+            }
+        }
+    }
+
+    updateOption(option, value) {
+        this.options[option] = value;
     }
 
     resetNodes(nodes) {
         this.nodes = nodes;
         this.sizeAdapt();
-        this.triangulation = new this.algorithm(this.nodes, this.drawingMethods);
+        this.triangulation.updateNodes(nodes);
         this.triangulation.triangulate();
     }
 
     createGif() {
         this.gif = new GIF({
-            quality: 10,
+            quality: 20,
             height: this.canvas.height,
             width: this.canvas.width,
+            workers: 4,
+            quality: 8,
             workerScript: "/scripts/lib/gif.worker.js"
         });
 
@@ -48,6 +68,22 @@ class Canvas {
             this.currentGif = true;
             this.createGif();
         }
+        this.currentPromise = this.triangulation.triangulate();
+        await this.currentPromise;
+        this.currentPromise = null;
+        if (gif) {
+            this.gif.render();
+            this.currentGif = false;
+        }
+    }
+
+    async restart(demoDelay=0, gif=false) {
+        this.updateDemoDelay(demoDelay);
+        this.triangulation = new this.algorithm(this.nodes, demoDelay);
+        if (gif) {
+            this.currentGif = true;
+            this.createGif();
+        }
         await this.triangulation.triangulate();
         if (gif) {
             this.gif.render();
@@ -61,14 +97,16 @@ class Canvas {
         this.drawPoints();
         this.drawDelaunay();
         if (this.currentGif) {
-            this.gif.addFrame(this.canvas.getContext("2d"), {copy: true});
+            this.gif.addFrame(this.canvas.getContext("2d"), {copy: true, delay: 1000/60});
         }
     }
 
     drawDelaunay() {
-        const edges = this.triangulation.getDelaunayEdges();
-        for (const edge of edges) {
-            this.drawEdge(...edge, true);
+        if (this.options.showTriangulation) {
+            const edges = this.triangulation.getDelaunayEdges();
+            for (const edge of edges) {
+                this.drawEdge(...edge, true);
+            }
         }
     }
 
@@ -87,8 +125,12 @@ class Canvas {
         const nodes = this.triangulation.getNodes();
         for (let i = 0; i < nodes.length; i++) {
             const node = nodes[i];
-            this.drawPoint(node, 5, "black", this.canvas);
-            this.drawText(i, node[0], node[1]);
+            if (this.options.showNodes) {
+                this.drawPoint(node, 5, "black", this.canvas);
+            }
+            if (this.options.showNodesNumbers) {
+                this.drawText(i, node[0], node[1]);
+            }
         }
     }
 
@@ -123,6 +165,7 @@ class Canvas {
 
     drawText(text, x, y) {
         const context = this.canvas.getContext("2d");
+        context.fillStyle = "black";
         context.font = "20px sans-serif";
         context.fillText(text, ...this.transform([x, y], this.scale, this.xMin, this.yMin));
     }
