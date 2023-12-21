@@ -50,5 +50,27 @@
             </div>
         </nav>
     </header>
+    <main>
+        <section class="section-options">
+            <button id="button-run-speed-tests">
+                Run random speed tests
+            </button>
+
+        </section>
+        <section class="section-options" id="section-tests">
+        </section>
+        <section id="section-charts">
+           <div id="div-chart">
+                <canvas id="canvas-chart"></canvas>
+                <canvas id="canvas-chart-efficient"></canvas>
+           </div>
+        </section>
+    </main>
 </body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="../scripts/geometry.js"></script>
+<script src="../scripts/utils.js"></script>
+<script src="../scripts/EfficientBowyerWatson.js"></script>
+<script src="../scripts/NaiveBowyerWatson.js"></script>
+<script src="../scripts/comparison.js"></script>
 </html>

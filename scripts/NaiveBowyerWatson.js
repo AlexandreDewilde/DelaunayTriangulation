@@ -106,20 +106,10 @@ class NaiveBowyerWatson {
         return this.voronoi;
     }
 
-    async triangulate(demo=0, random=true) {
+    async triangulate() {
         const n = this.nodes.length;
 
-        const firstColumn = nodeData.map(function (row) {
-            return row[0];
-        });
-
-        const secondColumn = nodeData.map(function (row) {
-            return row[1];
-        });
-        const xmin = Math.min(...firstColumn);
-        const xmax = Math.max(...firstColumn);
-        const ymin = Math.min(...secondColumn);
-        const ymax = Math.max(...secondColumn);
+        const [xmin, xmax, ymin, ymax] = minAndMaxNodes(this.nodes);
         const epsilon = 0.1 * Math.max(xmax - xmin, ymax - ymin); //10% de la plage maximale (max - min) dans l'une ou l'autre direction.
 
         const supA = new this.constructor.Point(n, xmin-epsilon, ymin-epsilon);
@@ -130,11 +120,6 @@ class NaiveBowyerWatson {
         const supTriangle = new this.constructor.Triangle(supA, supB, supC);
         this.delaunay = {};
         this.delaunay[supTriangle.toString()] = supTriangle;
-
-        if (random) {
-            shuffleArray(this.nodes);
-        }
-
         for (let i = 0; i < this.nodes.length; i++) {
             const point = new this.constructor.Point(i, ...this.nodes[i]);
             this.addPoint(point);

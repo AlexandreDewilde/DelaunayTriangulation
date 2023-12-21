@@ -30,6 +30,14 @@ function randomColor() {
     return colors[Math.floor(Math.random() * colors.length)];
 }
 
+function randomNodes(n) {
+    const nodes = [];
+    for (let i = 0; i < n; i++) {
+        nodes.push([Math.random(), Math.random()]);
+    }
+    return nodes;
+}
+
 
 function minAndMaxNodes(nodes) {
     let xMin = Number.MAX_VALUE;

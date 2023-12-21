@@ -89,7 +89,7 @@ class EfficientBowyerWatson {
         }
     }
 
-    constructor(nodes, demoDelay) {
+    constructor(nodes, demoDelay=0) {
         this.nodes = nodes;
         this.demoDelay = demoDelay;
         this.delaunay = null;
@@ -150,19 +150,22 @@ class EfficientBowyerWatson {
 
     hilbertSort(nodes) {
         nodes.sort((x,y) => {
-            const res = hilbertCoord(x[0], x[1], 0, 0, 1, 0, 1, 0, 16);
-            const res2 = hilbertCoord(y[0], y[1], 0, 0, 1, 0, 1, 0, 16);
+            const res = hilbertCoord(x[0], x[1], 0, 0, 1, 0, 1, 0, 30);
+            const res2 = hilbertCoord(y[0], y[1], 0, 0, 1, 0, 1, 0, 30);
             return res - res2;
         });
     }
 
-    async triangulate() {
+    async triangulate(hilbert=true) {
         this.faces = [this.getSuperTriangle(this.nodes)];
-        this.hilbertSort(this.nodes);
+        if (hilbert) {
+            this.hilbertSort(this.nodes);
+        }
 
         for (let i = 0; i < this.nodes.length; i++) {
             this.addPoint(i);
             if (this.demoDelay) {
+                this.computeVoronoi();
                 await new Promise(r => setTimeout(r, this.demoDelay));
             }
         }
@@ -174,7 +177,6 @@ class EfficientBowyerWatson {
         const cavity = [];
         const boundary = [];
         const otherSide = [];
-
         this.delaunayCavity(f, vertex, cavity, boundary, otherSide);
         const cavityLen = cavity.length;
         let j = 0;
@@ -191,7 +193,6 @@ class EfficientBowyerWatson {
             cavity.push(otherSide[j]);
         }
         this.computeAdjency(cavity);
-        this.computeVoronoi();
     }
 
     computeAdjency(cavity) {
