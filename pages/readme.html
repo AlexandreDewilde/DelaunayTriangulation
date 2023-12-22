@@ -37,21 +37,25 @@
                     <i class="fa-solid fa-chart-simple"></i>
                     Comparison
                 </a>
+                <a href="./readme.html">
+                    <i class="fa-solid fa-book"></i>
+                    ReadMe
+                </a>
             </div>
         </nav>
     </header>
-    <section class="section-options">
-        <button id="button-restart-demo">
-            Restart Demo
-        </button>
-    </section>
-    <section class="section-canvas" id="section-demo">
-    </section>
+    <main>
+        <section id="content"></section>
+    </main>
 </body>
-<script src="../scripts/utils.js"></script>
-<script src="../scripts/nodes_coarse.js"></script>
-<script src="../scripts/geometry.js"></script>
-<script src="../scripts/Fortune.js"></script>
-<script src="../scripts/Canvas.js"></script>
-<script src="../scripts/PageFortune.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+    async function displayMd() {
+        const response = await fetch('../readme.md');
+        const text = await response.text();
+        document.getElementById('content').innerHTML =
+          marked.parse(text);
+    }
+    displayMd();
+  </script>
 </html>

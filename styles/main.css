@@ -71,3 +71,7 @@ canvas {
     font-size: 1.5em;
     letter-spacing: 1px;
 }
+
+#content {
+    margin: 20px;
+}
