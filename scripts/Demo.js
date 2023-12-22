@@ -2,8 +2,6 @@ function createDemo(algorithm) {
     const sectionCanvas = document.getElementById("section-demo");
     const canvasTriangulation = document.getElementById("canvas-triangulation");
 
-
-    const buttonSkipDemo = document.getElementById("button-skip-demo");
     const buttonRestartDemo = document.getElementById("button-restart-demo");
     const buttonDownloadGif = document.getElementById("button-download-gif");
     const rangeDemoSpeed = document.getElementById("range-demo-speed");
@@ -34,8 +32,6 @@ function createDemo(algorithm) {
     rangeFontSize.addEventListener("change", () => triangulation.updateOption("fontSize", rangeFontSize.value));
 
     rangeNodeSize.addEventListener("change", () => triangulation.updateOption("nodeSize", rangeNodeSize.value));
-
-    buttonSkipDemo.addEventListener("click", () => triangulation.updateDemoDelay(0));
 
     buttonRestartDemo.addEventListener("click", () => triangulation.restart(rangeDemoSpeed.value));
 
